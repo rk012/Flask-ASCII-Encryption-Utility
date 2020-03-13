@@ -49,3 +49,5 @@ def decrypt_message():
     else:
         return decrypt(session['SHARED_KEY'], request.args['message'])
     
+
+ app.run(host='0.0.0.0', port=8080)
