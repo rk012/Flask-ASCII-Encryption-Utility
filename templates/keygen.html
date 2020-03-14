@@ -1,6 +1,9 @@
 {% if key %}
   Your public key is: {{ key }}
 {% endif %}
-<p>Send public key to recipient. Enter recipient's public key so URL looks like:</p>
-<code>.../keygen?key=RECIPIENTSPUBLICKEY</code><br><br><br>
+<p>Send public key to recipient.</p>
+<form action="/keygen" method="post">
+  Enter recipient's public key here: <input type="text" name="PUBLIC_KEY">
+  <input type= "submit" value="Submit">
+</form><br><br><br>
 <em>Note: key generation can cause page load time to go up to 3 minutes</em>
