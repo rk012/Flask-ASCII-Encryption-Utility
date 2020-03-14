@@ -12,9 +12,9 @@ app.secret_key = b'84bvf85hf84uhfeu'
 
 @app.route('/')
 def index():
-    return redirect(url_for('keygen', key=''))
+    return redirect(url_for('keygen'))
 
-@app.route('/keygen')
+@app.route('/keygen', methods=['GET', 'POST'])
 def keygen():
     if 'SHARED_KEY' in session:
         return redirect(url_for('start_index'))
@@ -22,32 +22,43 @@ def keygen():
     if 'PRIVATE_KEY' not in session:
         session['PRIVATE_KEY'] = random.randint(1, 1000000)
         
-    if request.args['key'] == '':
+    if request.method == 'POST':
+        session['SHARED_KEY'] = (int(request.form['PUBLIC_KEY'])**session['PRIVATE_KEY'])%MODULUS
+        return redirect(url_for('start'))
+    else:
         return render_template('keygen.html', key=(GENERATOR**session['PRIVATE_KEY'])%MODULUS)
-    else:
-        session['SHARED_KEY'] = (int(request.args['key'])**session['PRIVATE_KEY'])%MODULUS
-        return redirect(url_for('start_index'))
     
-@app.route('/start/')
-def start_index():
+@app.route('/start', methods=['GET', 'POST'])
+def start():
     if 'SHARED_KEY' not in session:
-        return redirect(url_for('keygen', key=''))
-    else:
-        return render_template('encryptor.html')
+        return redirect(url_for('keygen'))
 
-@app.route('/start/encrypt')
+    if request.method == 'POST':
+        if 'message' in request.form:
+            return render_template('start.html', message=encrypt(session['SHARED_KEY'], request.form['message']))
+        else:
+            return render_template('start.html', message=decrypt(session['SHARED_KEY'], request.form['encrypted_message']))
+    else:
+        return render_template('start.html')
+
+@app.route('/encrypt')
 def encrypt_message():
     if 'SHARED_KEY' not in session:
-        return redirect(url_for('keygen', key=''))
+        return redirect(url_for('keygen'))
     else:
-        return encrypt(session['SHARED_KEY'], request.args['message'])
+        return render_template('encrypt.html')
 
-@app.route('/start/decrypt')
+@app.route('/decrypt')
 def decrypt_message():
     if 'SHARED_KEY' not in session:
-        return redirect(url_for('keygen', key=''))
+        return redirect(url_for('keygen'))
     else:
-        return decrypt(session['SHARED_KEY'], request.args['message'])
-    
+        return render_template('decrypt.html')
 
- app.run(host='0.0.0.0', port=8080)
+@app.route('/newkeygen')
+def newkeygen():
+    session.pop('SHARED_KEY', None)
+    session.pop('PRIVATE_KEY', None)
+    return redirect(url_for('keygen'))
+
+app.run(host='0.0.0.0', port=80)
